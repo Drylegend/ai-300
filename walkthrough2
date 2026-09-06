@@ -1,0 +1,239 @@
+# MLOps Class-Notes Portal — Course Days Feature (Folder-Driven & Automation-Ready)
+
+## Overview
+
+Implemented the **Course Days** feature as a fully folder-driven architecture. A course day is defined exclusively by its content folder under `/content/days/day-XX/`.
+Adding a new day folder automatically discovers and renders that day in the sidebar and sets up its route, while deleting a day folder immediately removes it — **with zero component, router, or sidebar edits required**.
+
+---
+
+## Content Structure
+
+Each day is stored as a self-contained directory under `/content/days/`:
+
+```
+content/days/day-01/
+├── meta.json          # { "day": 1, "title": "Day 1", "subtitle": "...", "description": "..." }
+├── summary.md         # Daily summary in Markdown format
+├── links.json         # [{ "label": "...", "url": "...", "description": "..." }]
+└── transcripts/
+    ├── transcript-1.md # Session 1 transcript
+    └── transcript-2.md # Session 2 transcript
+```
+
+---
+
+## Implementation Details
+
+### 1. Dynamic Folder Scanner ([days.js](file:///d:/ai300/src/data/days.js))
+- Uses Vite's `import.meta.glob` to scan `/content/days/*/meta.json`, `/content/days/*/summary.md`, `/content/days/*/links.json`, and `/content/days/*/transcripts/*.md` at build and dev time.
+- Aggregates day data, parses JSON metadata, loads raw markdown, and sorts days in ascending numeric order.
+- Provides `getAllDays()` and `getDayBySlug(slug)`.
+
+### 2. Dynamic Sidebar Navigation ([Layout.jsx](file:///d:/ai300/src/components/Layout.jsx))
+- Added a `"COURSE DAYS"` section above `"LABS"` in the static sidebar (and mobile drawer).
+- Iterates over `getAllDays()` to render each day link with the `calendar_today` icon and active-state styling.
+- If zero days exist, the section does not render.
+
+### 3. Course Day Page with 3 Tabs ([CourseDayPage.jsx](file:///d:/ai300/src/pages/CourseDayPage.jsx))
+- Styled with the blue underline tab navigation matching `StudyNotes`:
+  - **Transcripts Tab**: Lists each transcript under `transcripts/` with a numbered blue badge, session title, and an interactive **"Click to Read"** accordion to expand/read the formatted markdown.
+  - **Summary Tab**: Renders `summary.md` using [MarkdownView.jsx](file:///d:/ai300/src/components/MarkdownView.jsx) with styled headings, bullet points, and inline code formatting.
+  - **Important Links Tab**: Renders link cards from `links.json` with titles, descriptions, and direct external launch buttons.
+- Includes breadcrumbs linking to `https://microsoftlearning.github.io/mslearn-mlops/` and Previous/Next Day navigation controls.
+
+---
+
+## Acceptance Verification
+
+Both acceptance checks were executed and verified via live browser automation:
+
+### 1. Day 1 Content Verification
+- Sidebar shows `"COURSE DAYS"` with `"Day 1"`.
+- Three tabs render correctly:
+  - Transcripts: Session 1 and Session 2 cards with expand/collapse reader.
+  - Summary: Rendered overview and bullet points from `summary.md`.
+  - Important Links: 3 structured resource cards from `links.json`.
+
+````carousel
+![Day 1 in sidebar and Transcripts tab](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/day01_transcripts_tab_1788678370774.png)
+<!-- slide -->
+![Expanded transcript view after clicking 'Click to Read'](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/day01_expanded_transcript_1788678427099.png)
+<!-- slide -->
+![Day 1 Summary tab rendering summary.md](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/day01_summary_tab_1788678587628.png)
+<!-- slide -->
+![Day 1 Important Links tab rendering links.json](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/day01_important_links_tab_1788678621120.png)
+````
+
+---
+
+### 2. Acceptance Check 2: Duplicating `day-01` to `day-02`
+- Copied `content/days/day-01` to `content/days/day-02` with `{ "day": 2, "title": "Day 2" }`.
+- **Result**: "Day 2" immediately appeared in the sidebar under "COURSE DAYS" in correct numeric order (`Day 1`, `Day 2`), with route `/days/day-02` working and Day 1 linking to "Next: Day 2" — **zero code modified**.
+
+![Sidebar showing both Day 1 and Day 2 automatically after duplicating folder](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/sidebar_course_days_1788679339803.png)
+
+---
+
+### 3. Acceptance Check 1: Deleting `day-02`
+- Deleted `content/days/day-02`.
+- **Result**: "Day 2" immediately disappeared from the sidebar, only "Day 1" remained, and navigating to `/days/day-02` correctly returned the "Day Not Found" fallback — **zero code modified**.
+
+![Sidebar with Day 2 cleanly removed after folder deletion](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/labs_page_sidebar_1788679453756.png)
+
+---
+
+## Build Verification
+
+```
+> npm run build
+✓ 46 modules transformed.
+dist/index.html                   1.00 kB │ gzip:  0.58 kB
+dist/assets/index-DSEweLLa.css   30.58 kB │ gzip:  6.21 kB
+dist/assets/index-DWFWh08J.js   284.78 kB │ gzip: 84.27 kB
+✓ built in 1.44s (0 errors, 0 warnings)
+```
+
+---
+
+# MLOps Class-Notes Portal — Browser Storage Persistence Layer
+
+## Overview
+
+Implemented a zero-backend, client-side browser storage persistence system for student progress, personal notes, and "Mark as Read" activity across the portal. Everything persists under a single namespaced key: `mlops-portal:progress:v1`.
+
+### Key Capabilities Built:
+1. **Generic Storage Layer ([storage.js](file:///d:/ai300/src/utils/storage.js))**:
+   - Single consolidated JSON store keyed by lab ID and day slug.
+   - Robust `localStorage` accessibility detection with seamless in-memory fallback for private/incognito browsing or disabled storage.
+   - Dispatches custom `PROGRESS_EVENT` and listens to `storage` events for instant cross-component and cross-tab reactivity.
+2. **Unified State via Context ([ProgressContext.jsx](file:///d:/ai300/src/context/ProgressContext.jsx))**:
+   - Single source of truth across `AzurePortalLabs`, `FoundryLabs`, `LabProgressPanel`, `StudyNotes`, and `CourseDayPage`.
+   - Prevents state drift between lab card dropdowns, study notes toggles, and the Progress Overview stats.
+3. **Interactive Personal Notes ([StudyNotes.jsx](file:///d:/ai300/src/pages/StudyNotes.jsx))**:
+   - Added an expandable/collapsible personal study notes markdown/text editor for every lab.
+   - Students can save their own observations, DP-100 review notes, and execution remarks, surviving reloads and browser sessions.
+4. **Course Days "Mark as Read" ([CourseDayPage.jsx](file:///d:/ai300/src/pages/CourseDayPage.jsx))**:
+   - Transcripts and daily summaries now have dedicated "Mark Read" / "Marked as Read" buttons persisting in the same storage record.
+5. **Settings & Backup Modal ([ProgressSettingsModal.jsx](file:///d:/ai300/src/components/ProgressSettingsModal.jsx))**:
+   - Shows active storage engine status (`localStorage Active` or `In-Memory Fallback`).
+   - **Export Progress**: Downloads progress as a clean `.json` file.
+   - **Import Progress**: Allows uploading a backup JSON file to restore or transfer state across devices.
+   - **Reset Progress**: Clears stored state back to defaults with confirmation.
+
+---
+
+## Verification & Screenshots
+
+Browser automation verified:
+1. **Lab Status Update & Progress Sync**:
+   - Setting Lab 01 to "In Progress" immediately updated the Progress Overview to `1 In Progress` and revealed the "Continue Where You Left Off" card.
+   - Updating Lab 01 to "Completed" updated the card to `1 Completed` / `14%`.
+2. **Persistence After Reload**:
+   - Hard reloading the page retained the completed lab status and personal notes.
+3. **Course Day Read Status**:
+   - Marking Session 1 as Read in Day 1 persisted across page reloads.
+4. **Backup Modal**:
+   - Modal opened cleanly displaying storage health and export/reset controls.
+
+````carousel
+![Main Labs page showing default state](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/main_labs_default_1788686112387.png)
+<!-- slide -->
+![Settings and Storage Backup Modal showing active storage and 1 Done / 1 Notes](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/progress_backup_modal_1788686525786.png)
+````
+
+### Production Build
+```
+> npm run build
+vite v8.2.2 building client environment for production...
+✓ 49 modules transformed.
+dist/index.html                   1.00 kB │ gzip:  0.58 kB
+dist/assets/index-BjsB9wXA.css   32.39 kB │ gzip:  6.47 kB
+dist/assets/index-f706rvUu.js   298.52 kB │ gzip: 87.01 kB
+✓ built in 211ms (0 errors)
+```
+
+---
+
+# Multi-Agent Content Ingestion Orchestrator
+
+## Overview
+
+Built a Python CLI orchestrator driven by five specialized agents run in sequence. The orchestrator allows taking raw course source files (primarily `.docx`, as well as `.md`, `.txt`, and images), converting them to clean Markdown, placing them into canonical project folders (`/content/days/day-XX/` and `/content/labs/<platform>/<lab-id>/`), validating all outputs, and staging/committing/pushing to GitHub.
+
+```
+d:/ai300/
+├── ingest.py                         # Root entry point (`python ingest.py`)
+├── orchestrator/
+│   ├── __init__.py
+│   ├── config.py                     # Paths, platforms, file types, known lab references
+│   ├── logger.py                     # Dual terminal & file logger (.ingest_logs/)
+│   ├── dialogs.py                    # Native Tkinter file pickers with terminal fallback
+│   ├── agent1_convert.py             # Agent 1: Normalize & Convert (.docx to clean Markdown)
+│   ├── agent2_placement.py           # Agent 2: Placement & Metadata generator/merger
+│   ├── agent3_numbering.py           # Agent 3: Sequential Numbering & Dedup scanner
+│   ├── agent4_validation.py          # Agent 4: File existence, syntax & cross-check validator
+│   ├── agent5_git.py                 # Agent 5: Selective git add, commit & remote push
+│   └── cli.py                        # Interactive wizard coordinating the pipeline
+└── tests/
+    └── test_ingest.py                # Automated unit & integration tests (12/12 passing)
+```
+
+---
+
+## Agent Pipeline Details
+
+1. **Agent 1 — Normalize & Convert ([agent1_convert.py](file:///d:/ai300/orchestrator/agent1_convert.py))**:
+   - Converts `.docx` documents into clean Markdown using `python-docx`.
+   - Preserves headings (`#`, `##`, `###`), bullet and numbered lists, inline bold (`**bold**`), italic (`*italic*`), and tables (`| col1 | col2 |`).
+   - Strips Word styling cruft and cleans up formatting.
+   - Operates strictly in a temporary staging directory (`.staging/<run_id>/`), never mutating original files.
+   - Normalizes output filenames to canonical standards (`transcript-N.md`, `summary.md`, `notes.md`, `doodle.<ext>`).
+
+2. **Agent 2 — Placement ([agent2_placement.py](file:///d:/ai300/orchestrator/agent2_placement.py))**:
+   - Moves normalized files into the site's canonical `/content/days/day-XX/` or `/content/labs/<platform>/<lab-id>/` hierarchy.
+   - Creates or updates `meta.json` and `links.json` adhering to the established schema.
+   - Refuses to overwrite any existing destination file without explicit user confirmation.
+
+3. **Agent 3 — Numbering & Dedup ([agent3_numbering.py](file:///d:/ai300/orchestrator/agent3_numbering.py))**:
+   - Scans existing folders (`content/days/day-XX/` and `content/labs/<platform>/`) and `src/data/labs.js`.
+   - Proposes the next sequential number (e.g., if `day-01` exists, proposes `2`).
+   - If overridden to touch an existing day/lab, requires confirmation before proceeding.
+
+4. **Agent 4 — Validation ([agent4_validation.py](file:///d:/ai300/orchestrator/agent4_validation.py))**:
+   - Checks that all expected files exist and are non-empty (>0 bytes).
+   - Validates JSON parsing and required keys in `meta.json` and `links.json`.
+   - Validates Markdown body readability and UTF-8 encoding.
+   - Validates image assets (PIL verification / SVG XML check).
+   - Cross-checks transcript sequences for gaps and folder number matching.
+   - Outputs a clean pass/fail terminal report and halts execution before Git Push if any check fails.
+
+5. **Agent 5 — Selective Git Push ([agent5_git.py](file:///d:/ai300/orchestrator/agent5_git.py))**:
+   - Runs only when Agent 4 validation passes.
+   - Selectively stages **only** the touched files (`git add <f1> <f2>...`), avoiding blanket staging.
+   - Creates a descriptive commit message (e.g. `Add Day 2: 2 transcripts, summary`).
+   - Pushes to the current active branch.
+   - In case of remote push failure, leaves local commit intact and prints copy-paste instructions for manual retry.
+
+---
+
+## Testing & Verification
+
+Automated test suite `tests/test_ingest.py` executed:
+```
+$ python -m unittest tests/test_ingest.py
+==> Ingestion run started. Detailed log: ingest_20260906_160920.log
+................
+----------------------------------------------------------------------
+Ran 12 tests in 0.264s
+
+OK
+```
+- **12/12 tests passing**:
+  - `TestAgent1Convert`: DOCX heading/list/table/formatting conversion, markdown/text passthrough, image verification, original file immutability.
+  - `TestAgent2Placement`: Destination placement, `meta.json` and `links.json` creation and merge.
+  - `TestAgent3Numbering`: Next sequential number detection (`day-01` -> 2, `azure-portal` labs 1-7 -> 8).
+  - `TestAgent4Validation`: Passing files, empty files detection, invalid JSON detection, report formatting.
+  - `TestEndToEndOrchestration`: Simulated full pipeline run converting sample raw documents, placing into Day folder, validating all files, and verifying git staging list.
+
+
