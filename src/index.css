@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+/* Google Fonts loaded via <link> tags in index.html */
+
+/* ── Tailwind v4 Theme ──────────────────────────────────── */
+@theme {
+  /* Colors – Stitch Azure MLOps design system */
+  --color-primary: #004ac6;
+  --color-primary-container: #2563eb;
+  --color-primary-fixed: #dbe1ff;
+  --color-primary-fixed-dim: #b4c5ff;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #eeefff;
+  --color-on-primary-fixed: #00174b;
+  --color-on-primary-fixed-variant: #003ea8;
+  --color-inverse-primary: #b4c5ff;
+
+  --color-secondary: #0058be;
+  --color-secondary-container: #2170e4;
+  --color-secondary-fixed: #d8e2ff;
+  --color-secondary-fixed-dim: #adc6ff;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #fefcff;
+  --color-on-secondary-fixed: #001a42;
+  --color-on-secondary-fixed-variant: #004395;
+
+  --color-tertiary: #006058;
+  --color-tertiary-container: #007b71;
+  --color-tertiary-fixed: #89f5e7;
+  --color-tertiary-fixed-dim: #6bd8cb;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #b3fff3;
+  --color-on-tertiary-fixed: #00201d;
+  --color-on-tertiary-fixed-variant: #005049;
+
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+
+  --color-surface: #faf8ff;
+  --color-surface-dim: #d2d9f4;
+  --color-surface-bright: #faf8ff;
+  --color-surface-container: #eaedff;
+  --color-surface-container-low: #f2f3ff;
+  --color-surface-container-high: #e2e7ff;
+  --color-surface-container-highest: #dae2fd;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-variant: #dae2fd;
+  --color-surface-tint: #0053db;
+  --color-on-surface: #131b2e;
+  --color-on-surface-variant: #434655;
+  --color-on-background: #131b2e;
+  --color-background: #faf8ff;
+  --color-inverse-surface: #283044;
+  --color-inverse-on-surface: #eef0ff;
+  --color-outline: #737686;
+  --color-outline-variant: #c3c6d7;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Spacing */
+  --spacing-gutter-xs: 0.25rem;
+  --spacing-gutter-sm: 0.5rem;
+  --spacing-gutter-md: 1rem;
+  --spacing-gutter-lg: 1.5rem;
+  --spacing-gutter-xl: 2rem;
+  --spacing-gutter-2xl: 3rem;
+  --spacing-header-height: 64px;
+  --spacing-sidebar-width: 280px;
+}
+
+/* ── Base Resets ─────────────────────────────────────────── */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  overscroll-behavior: none;
+}
+
+/* Hide scrollbars but allow scrolling */
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  scrollbar-width: none;
+}
+
+/* Safe area padding utilities */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Material Symbols baseline alignment */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}

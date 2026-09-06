@@ -1,0 +1,17 @@
+[
+  {
+    "label": "Microsoft Learn: Introduction to MLOps",
+    "url": "https://learn.microsoft.com/azure/machine-learning/concept-model-management-and-deployment",
+    "description": "Official overview of model management and deployment in Azure ML."
+  },
+  {
+    "label": "Azure ML Workspace Architecture Guide",
+    "url": "https://learn.microsoft.com/azure/machine-learning/concept-workspace",
+    "description": "Deep dive into workspace resources, dependencies, and security boundaries."
+  },
+  {
+    "label": "Enterprise MLOps Reference Architecture",
+    "url": "https://github.com/Azure/mlops-v2",
+    "description": "Production-ready templates for Azure MLOps v2 with GitHub Actions and Azure DevOps."
+  }
+]

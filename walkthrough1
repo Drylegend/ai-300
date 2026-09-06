@@ -1,0 +1,95 @@
+# MLOps Class-Notes Portal — Course Days Feature (Folder-Driven & Automation-Ready)
+
+## Overview
+
+Implemented the **Course Days** feature as a fully folder-driven architecture. A course day is defined exclusively by its content folder under `/content/days/day-XX/`.
+Adding a new day folder automatically discovers and renders that day in the sidebar and sets up its route, while deleting a day folder immediately removes it — **with zero component, router, or sidebar edits required**.
+
+---
+
+## Content Structure
+
+Each day is stored as a self-contained directory under `/content/days/`:
+
+```
+content/days/day-01/
+├── meta.json          # { "day": 1, "title": "Day 1", "subtitle": "...", "description": "..." }
+├── summary.md         # Daily summary in Markdown format
+├── links.json         # [{ "label": "...", "url": "...", "description": "..." }]
+└── transcripts/
+    ├── transcript-1.md # Session 1 transcript
+    └── transcript-2.md # Session 2 transcript
+```
+
+---
+
+## Implementation Details
+
+### 1. Dynamic Folder Scanner ([days.js](file:///d:/ai300/src/data/days.js))
+- Uses Vite's `import.meta.glob` to scan `/content/days/*/meta.json`, `/content/days/*/summary.md`, `/content/days/*/links.json`, and `/content/days/*/transcripts/*.md` at build and dev time.
+- Aggregates day data, parses JSON metadata, loads raw markdown, and sorts days in ascending numeric order.
+- Provides `getAllDays()` and `getDayBySlug(slug)`.
+
+### 2. Dynamic Sidebar Navigation ([Layout.jsx](file:///d:/ai300/src/components/Layout.jsx))
+- Added a `"COURSE DAYS"` section above `"LABS"` in the static sidebar (and mobile drawer).
+- Iterates over `getAllDays()` to render each day link with the `calendar_today` icon and active-state styling.
+- If zero days exist, the section does not render.
+
+### 3. Course Day Page with 3 Tabs ([CourseDayPage.jsx](file:///d:/ai300/src/pages/CourseDayPage.jsx))
+- Styled with the blue underline tab navigation matching `StudyNotes`:
+  - **Transcripts Tab**: Lists each transcript under `transcripts/` with a numbered blue badge, session title, and an interactive **"Click to Read"** accordion to expand/read the formatted markdown.
+  - **Summary Tab**: Renders `summary.md` using [MarkdownView.jsx](file:///d:/ai300/src/components/MarkdownView.jsx) with styled headings, bullet points, and inline code formatting.
+  - **Important Links Tab**: Renders link cards from `links.json` with titles, descriptions, and direct external launch buttons.
+- Includes breadcrumbs linking to `https://microsoftlearning.github.io/mslearn-mlops/` and Previous/Next Day navigation controls.
+
+---
+
+## Acceptance Verification
+
+Both acceptance checks were executed and verified via live browser automation:
+
+### 1. Day 1 Content Verification
+- Sidebar shows `"COURSE DAYS"` with `"Day 1"`.
+- Three tabs render correctly:
+  - Transcripts: Session 1 and Session 2 cards with expand/collapse reader.
+  - Summary: Rendered overview and bullet points from `summary.md`.
+  - Important Links: 3 structured resource cards from `links.json`.
+
+````carousel
+![Day 1 in sidebar and Transcripts tab](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/day_01_transcripts_1788678281313.png)
+<!-- slide -->
+![Expanded transcript view after clicking 'Click to Read'](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/day_01_expanded_transcript_1788678300263.png)
+<!-- slide -->
+![Day 1 Summary tab rendering summary.md](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/day_01_summary_tab_1788678310344.png)
+<!-- slide -->
+![Day 1 Important Links tab rendering links.json](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/day_01_links_tab_1788678318182.png)
+````
+
+---
+
+### 2. Acceptance Check 2: Duplicating `day-01` to `day-02`
+- Copied `content/days/day-01` to `content/days/day-02` with `{ "day": 2, "title": "Day 2" }`.
+- **Result**: "Day 2" immediately appeared in the sidebar under "COURSE DAYS" in correct numeric order (`Day 1`, `Day 2`), with route `/days/day-02` working and Day 1 linking to "Next: Day 2" — **zero code modified**.
+
+![Sidebar showing both Day 1 and Day 2 automatically after duplicating folder](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/sidebar_with_day1_and_day2_1788679310878.png)
+
+---
+
+### 3. Acceptance Check 1: Deleting `day-02`
+- Deleted `content/days/day-02`.
+- **Result**: "Day 2" immediately disappeared from the sidebar, only "Day 1" remained, and navigating to `/days/day-02` correctly returned the "Day Not Found" fallback — **zero code modified**.
+
+![Sidebar with Day 2 cleanly removed after folder deletion](C:/Users/Utsav/.gemini/antigravity-ide/brain/318f1f14-70fa-4b1c-a39b-f59b95098240/sidebar_day2_removed_1788679432653.png)
+
+---
+
+## Build Verification
+
+```
+> npm run build
+✓ 46 modules transformed.
+dist/index.html                   1.00 kB │ gzip:  0.58 kB
+dist/assets/index-DSEweLLa.css   30.58 kB │ gzip:  6.21 kB
+dist/assets/index-DWFWh08J.js   284.78 kB │ gzip: 84.27 kB
+✓ built in 1.44s (0 errors, 0 warnings)
+```
