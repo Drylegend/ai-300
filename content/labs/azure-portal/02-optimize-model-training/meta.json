@@ -1,0 +1,8 @@
+{
+  "platform": "azure-portal",
+  "id": "02-optimize-model-training",
+  "number": 2,
+  "title": "Optimize model training with MLflow",
+  "sourceUrl": "https://microsoftlearning.github.io/mslearn-mlops/docs/02-optimize-model-training.html",
+  "status": "not-started"
+}
