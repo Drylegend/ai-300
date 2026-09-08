@@ -1,0 +1,8 @@
+{
+  "platform": "azure-portal",
+  "id": "Yes",
+  "number": 1,
+  "title": "Find the best classification model with Automated ML",
+  "sourceUrl": "https://microsoftlearning.github.io/mslearn-mlops/docs/01-experiment-evaluate-models.html",
+  "status": "not-started"
+}
