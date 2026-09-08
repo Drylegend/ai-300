@@ -146,7 +146,7 @@ class Agent1NormalizeConvert:
         if not text:
             return ""
 
-        style_name = (paragraph.style.name or "").lower()
+        style_name = (paragraph.style.name if paragraph.style else "").lower()
 
         # Headings
         if "heading 1" in style_name:
