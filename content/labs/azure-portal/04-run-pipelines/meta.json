@@ -1,0 +1,8 @@
+{
+  "platform": "azure-portal",
+  "id": "04-run-pipelines",
+  "number": 4,
+  "title": "Build scalable machine learning pipelines",
+  "sourceUrl": "https://microsoftlearning.github.io/mslearn-mlops/docs/04-run-pipelines.html",
+  "status": "not-started"
+}
