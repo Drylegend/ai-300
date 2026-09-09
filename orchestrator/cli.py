@@ -114,7 +114,10 @@ def _handle_day_ingestion(agent1, agent2, agent3, agent4, agent5):
 
         if selected_file:
             try:
-                staged = agent1.process_file(selected_file, f"transcript-{i}.md")
+                # Preserve docx format for Word documents
+                src_ext = selected_file.suffix.lower()
+                out_ext = ".docx" if src_ext in {".docx", ".doc"} else ".md"
+                staged = agent1.process_file(selected_file, f"transcript-{i}{out_ext}")
                 placed = agent2.place_day_file(staged, day_number, "transcript", transcript_index=i)
                 if placed:
                     expected_files.append(placed)
@@ -129,7 +132,9 @@ def _handle_day_ingestion(agent1, agent2, agent3, agent4, agent5):
     summary_file = pick_file(summary_title, doc_filetypes)
     if summary_file:
         try:
-            staged_summary = agent1.process_file(summary_file, "summary.md")
+            src_ext = summary_file.suffix.lower()
+            out_ext = ".docx" if src_ext in {".docx", ".doc"} else ".md"
+            staged_summary = agent1.process_file(summary_file, f"summary{out_ext}")
             placed_summary = agent2.place_day_file(staged_summary, day_number, "summary")
             if placed_summary:
                 expected_files.append(placed_summary)

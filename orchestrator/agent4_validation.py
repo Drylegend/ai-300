@@ -79,7 +79,17 @@ class Agent4Validation:
 
         ext = path.suffix.lower()
 
-        # 3. JSON check
+        # 3. docx check
+        if ext == ".docx":
+            try:
+                import docx
+                doc = docx.Document(path)
+                result.add(path, True, f"Valid Word document ({len(doc.paragraphs)} paragraphs, {size} bytes)")
+            except Exception as e:
+                result.add(path, False, f"Invalid or corrupted docx: {e}")
+            return
+
+        # 4. JSON check
         if ext == ".json":
             try:
                 data = json.loads(path.read_text(encoding="utf-8"))
@@ -99,7 +109,7 @@ class Agent4Validation:
                 result.add(path, False, f"Invalid JSON syntax: {e}")
             return
 
-        # 4. Markdown check
+        # 5. Markdown check
         if ext in {".md", ".txt"}:
             try:
                 text = path.read_text(encoding="utf-8")
@@ -114,7 +124,23 @@ class Agent4Validation:
                 result.add(path, False, f"Error reading Markdown: {e}")
             return
 
-        # 5. Image check
+        # 6. HTML check
+        if ext == ".html":
+            try:
+                text = path.read_text(encoding="utf-8")
+                if not text.strip():
+                    result.add(path, False, "HTML content contains only whitespace")
+                elif "<" not in text:
+                    result.add(path, False, "HTML file contains no tags")
+                else:
+                    result.add(path, True, f"Valid HTML ({size} bytes)")
+            except UnicodeDecodeError:
+                result.add(path, False, "File is not valid UTF-8 text")
+            except Exception as e:
+                result.add(path, False, f"Error reading HTML: {e}")
+            return
+
+        # 7. Image check
         if ext in IMAGE_EXTENSIONS:
             if ext == ".svg":
                 try:
@@ -162,7 +188,7 @@ class Agent4Validation:
         if transcripts_dir.exists():
             indices = []
             for f in transcripts_dir.iterdir():
-                m = re.match(r"^transcript-(\d+)\.md$", f.name)
+                m = re.match(r"^transcript-(\d+)\.(docx|md|html)$", f.name)
                 if m:
                     indices.append(int(m.group(1)))
             if indices:

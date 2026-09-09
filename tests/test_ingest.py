@@ -1,6 +1,8 @@
 """
 Unit & Integration tests for Multi-Agent Content Ingestion Orchestrator.
 Tests Agents 1, 2, 3, 4, and 5 in isolated temporary directories.
+
+Updated to ensure .docx files are preserved natively as .docx without conversion.
 """
 
 import unittest
@@ -10,6 +12,7 @@ import json
 from pathlib import Path
 from docx import Document
 from PIL import Image
+import io
 
 from orchestrator.agent1_convert import Agent1NormalizeConvert, ConversionError
 from orchestrator.agent2_placement import Agent2Placement
@@ -21,7 +24,6 @@ from orchestrator.config import DAYS_DIR, LABS_DIR
 
 class TestAgent3Numbering(unittest.TestCase):
     def test_propose_next_day_number(self):
-        # We know day-01 exists in content/days/
         next_day = Agent3NumberingDedup.propose_next_day_number()
         self.assertGreaterEqual(next_day, 2, "Proposed day number should be at least 2")
 
@@ -31,7 +33,6 @@ class TestAgent3Numbering(unittest.TestCase):
 
     def test_scan_existing_labs(self):
         labs = Agent3NumberingDedup.scan_existing_labs("azure-portal")
-        # In labs.js we have labs 1-7
         self.assertIn(1, labs)
         self.assertIn(7, labs)
         next_lab = Agent3NumberingDedup.propose_next_lab_number("azure-portal")
@@ -47,57 +48,36 @@ class TestAgent1Convert(unittest.TestCase):
         self.agent.cleanup_staging()
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
-    def test_convert_docx_to_markdown(self):
+    def test_preserve_docx_native(self):
+        """Test that docx files are preserved natively as .docx."""
         docx_path = self.test_dir / "sample.docx"
         doc = Document()
         doc.add_heading("MLOps Pipelines Overview", level=1)
-        doc.add_heading("Step 1: Data Preparation", level=2)
-
-        p1 = doc.add_paragraph()
-        run1 = p1.add_run("Important concept: ")
-        run1.bold = True
-        run2 = p1.add_run("Automated deployment")
-        run2.italic = True
-
-        doc.add_paragraph("First bullet item", style="List Bullet")
-        doc.add_paragraph("Second bullet item", style="List Bullet")
-        doc.add_paragraph("Step A", style="List Number")
-        doc.add_paragraph("Step B", style="List Number")
-
-        table = doc.add_table(rows=2, cols=2)
-        table.rows[0].cells[0].text = "Metric"
-        table.rows[0].cells[1].text = "Value"
-        table.rows[1].cells[0].text = "Accuracy"
-        table.rows[1].cells[1].text = "0.94"
-
+        doc.add_paragraph("Important concept: Automated deployment")
         doc.save(str(docx_path))
         orig_mtime = docx_path.stat().st_mtime
 
-        # Run conversion
-        staged_file = self.agent.process_file(docx_path, "transcript-1.md")
+        # Run process_file — should preserve .docx
+        staged_file = self.agent.process_file(docx_path, "transcript-1.docx")
 
         self.assertTrue(staged_file.exists())
-        content = staged_file.read_text(encoding="utf-8")
+        self.assertEqual(staged_file.suffix, ".docx")
 
-        # Verify Markdown structure
-        self.assertIn("# MLOps Pipelines Overview", content)
-        self.assertIn("## Step 1: Data Preparation", content)
-        self.assertIn("**Important concept:**", content)
-        self.assertIn("*Automated deployment*", content)
-        self.assertIn("- First bullet item", content)
-        self.assertIn("1. Step A", content)
-        self.assertIn("| Metric | Value |", content)
-        self.assertIn("| Accuracy | 0.94 |", content)
+        # Verify it can be read as a valid docx
+        read_doc = Document(str(staged_file))
+        self.assertEqual(read_doc.paragraphs[0].text, "MLOps Pipelines Overview")
 
         # Verify original file was not mutated
         self.assertEqual(docx_path.stat().st_mtime, orig_mtime)
 
     def test_process_markdown_and_text(self):
+        """Test that .md/.txt files pass through cleaned."""
         md_path = self.test_dir / "raw_notes.md"
         md_path.write_text("# Raw Notes\r\n\r\n- Item 1\r\n", encoding="utf-8")
 
         staged_file = self.agent.process_file(md_path, "summary.md")
         self.assertTrue(staged_file.exists())
+        self.assertEqual(staged_file.suffix, ".md")
         self.assertEqual(staged_file.read_text(encoding="utf-8"), "# Raw Notes\n\n- Item 1\n")
 
     def test_process_image(self):
@@ -163,6 +143,17 @@ class TestAgent4Validation(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
+    def test_validation_docx_pass(self):
+        """Test that valid .docx files pass validation."""
+        f1 = self.test_dir / "transcript-1.docx"
+        doc = Document()
+        doc.add_paragraph("Sample transcript paragraph")
+        doc.save(str(f1))
+
+        res = self.agent.validate_plan([f1])
+        self.assertTrue(res.all_passed)
+        self.assertEqual(res.passed_count, 1)
+
     def test_validation_pass(self):
         f1 = self.test_dir / "meta.json"
         f1.write_text(json.dumps({"day": 1, "title": "Day 1"}), encoding="utf-8")
@@ -221,9 +212,12 @@ class TestEndToEndOrchestration(unittest.TestCase):
             doc2.add_paragraph("Key takeaways from today's discussion on scalable pipelines.")
             doc2.save(str(raw_summary))
 
-            # 2. Agent 1: Normalize & Convert
-            staged_t1 = agent1.process_file(raw_transcript, "transcript-1.md")
-            staged_sum = agent1.process_file(raw_summary, "summary.md")
+            # 2. Agent 1: Normalize & Stage — preserves .docx natively
+            staged_t1 = agent1.process_file(raw_transcript, "transcript-1.docx")
+            staged_sum = agent1.process_file(raw_summary, "summary.docx")
+
+            self.assertEqual(staged_t1.suffix, ".docx")
+            self.assertEqual(staged_sum.suffix, ".docx")
 
             # 3. Agent 2: Placement
             placed_t1 = agent2.place_day_file(staged_t1, self.test_day, "transcript", transcript_index=1)
@@ -252,11 +246,11 @@ class TestEndToEndOrchestration(unittest.TestCase):
             for f in expected_files:
                 self.assertIn(f, touched)
 
-            # 6. Verify filesystem layout matches existing conventions
+            # 6. Verify filesystem layout has native .docx files
             self.assertTrue((self.day_dir / "meta.json").exists())
-            self.assertTrue((self.day_dir / "summary.md").exists())
+            self.assertTrue((self.day_dir / "summary.docx").exists())
             self.assertTrue((self.day_dir / "links.json").exists())
-            self.assertTrue((self.day_dir / "transcripts" / "transcript-1.md").exists())
+            self.assertTrue((self.day_dir / "transcripts" / "transcript-1.docx").exists())
 
         finally:
             agent1.cleanup_staging()
@@ -264,4 +258,3 @@ class TestEndToEndOrchestration(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

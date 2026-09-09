@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import useLabState from '../hooks/useLabState';
 import StatusBadge from '../components/StatusBadge';
+import MarkdownView from '../components/MarkdownView';
 import { COURSE_CONFIG } from '../config';
 
 const STATUS_CYCLE = ['not-started', 'in-progress', 'done'];
@@ -229,6 +230,24 @@ export default function StudyNotes() {
       {/* Tab content: Notes & Summary */}
       {activeTab === 'summary' && (
         <div className="flex flex-col gap-4">
+          {/* Ingested Notes from content/labs/ (read-only) */}
+          {lab.ingestedNotes && (
+            <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm flex flex-col gap-4 border border-outline-variant/10">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">article</span>
+                <h3 className="text-base font-semibold text-on-surface">
+                  Ingested Lab Notes
+                </h3>
+                <span className="px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary text-[10px] font-semibold">
+                  From Content
+                </span>
+              </div>
+              <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/10">
+                <MarkdownView content={lab.ingestedNotes} />
+              </div>
+            </div>
+          )}
+
           {/* Paraphrased Study Notes — editable & persisted to localStorage */}
           <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm flex flex-col gap-4 border border-outline-variant/10">
             <div className="flex items-center justify-between">

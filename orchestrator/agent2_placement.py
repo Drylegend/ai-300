@@ -33,18 +33,27 @@ class Agent2Placement:
         day_folder_name = f"day-{day_number:02d}"
         day_dir = DAYS_DIR / day_folder_name
 
+        # Determine the file extension from the staged file
+        ext = staged_file.suffix.lower()  # .md or .html
+
         if slot_type == "transcript":
             idx = transcript_index or 1
             target_dir = day_dir / "transcripts"
-            target_file = target_dir / f"transcript-{idx}.md"
+            target_file = target_dir / f"transcript-{idx}{ext}"
         elif slot_type == "summary":
             target_dir = day_dir
-            target_file = target_dir / "summary.md"
+            target_file = target_dir / f"summary{ext}"
         else:
             target_dir = day_dir
             target_file = target_dir / staged_file.name
 
-        return self._move_with_confirmation(staged_file, target_file)
+        placed = self._move_with_confirmation(staged_file, target_file)
+
+        # If this is an HTML file, also copy the images/ subfolder from staging
+        if placed and ext == ".html":
+            self._copy_images_from_staging(staged_file.parent, target_file.parent)
+
+        return placed
 
     def place_lab_file(
         self,
@@ -66,7 +75,13 @@ class Agent2Placement:
         else:
             target_file = lab_dir / staged_file.name
 
-        return self._move_with_confirmation(staged_file, target_file)
+        placed = self._move_with_confirmation(staged_file, target_file)
+
+        # If this is an HTML notes file, also copy the images/ subfolder from staging
+        if placed and staged_file.suffix.lower() == ".html":
+            self._copy_images_from_staging(staged_file.parent, target_file.parent)
+
+        return placed
 
     def ensure_day_metadata(
         self,
@@ -195,6 +210,26 @@ class Agent2Placement:
         self.touched_files.add(target_file)
         log_agent("Agent 2", f"Placed file: {target_file.name} -> {target_file.parent}")
         return target_file
+
+    def _copy_images_from_staging(self, staging_dir: Path, target_dir: Path):
+        """Copies images/ subfolder from staging to target directory if it exists."""
+        staging_images = staging_dir / "images"
+        if not staging_images.exists() or not staging_images.is_dir():
+            return
+
+        target_images = target_dir / "images"
+        target_images.mkdir(parents=True, exist_ok=True)
+
+        copied_count = 0
+        for img_file in staging_images.iterdir():
+            if img_file.is_file():
+                dest = target_images / img_file.name
+                shutil.copy2(img_file, dest)
+                self.touched_files.add(dest)
+                copied_count += 1
+
+        if copied_count > 0:
+            log_agent("Agent 2", f"Copied {copied_count} images to {target_images}")
 
     def get_touched_files(self) -> List[Path]:
         """Returns all destination files touched in this session."""

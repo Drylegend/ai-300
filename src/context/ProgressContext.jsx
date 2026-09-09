@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import INITIAL_LABS from '../data/labs';
+import ENRICHED_LABS from '../data/labs';
 import {
   getProgress,
   setLabStatus,
@@ -38,7 +38,7 @@ export function ProgressProvider({ children }) {
   }, []);
 
   // Labs array merged with persisted status & notes
-  const labs = INITIAL_LABS.map(lab => {
+  const labs = ENRICHED_LABS.map(lab => {
     const saved = store.labs[lab.id];
     return {
       ...lab,

@@ -4,6 +4,15 @@ import { getAllDays, getDayBySlug } from '../data/days';
 import { COURSE_CONFIG } from '../config';
 import { useProgress } from '../context/ProgressContext';
 import MarkdownView from '../components/MarkdownView';
+import HtmlView from '../components/HtmlView';
+
+/** Renders content in either HTML or Markdown format based on the format field. */
+function ContentRenderer({ content, format }) {
+  if (format === 'html') {
+    return <HtmlView content={content} />;
+  }
+  return <MarkdownView content={content} />;
+}
 
 export default function CourseDayPage() {
   const { slug } = useParams();
@@ -226,7 +235,7 @@ export default function CourseDayPage() {
                   {isExpanded && (
                     <div className="pt-2 border-t border-outline-variant/10">
                       <div className="p-4 md:p-5 rounded-xl bg-surface-container-low border border-outline-variant/10">
-                        <MarkdownView content={transcript.content} />
+                        <ContentRenderer content={transcript.content} format={transcript.format} />
                       </div>
                     </div>
                   )}
@@ -240,7 +249,7 @@ export default function CourseDayPage() {
               </span>
               <h3 className="text-base font-semibold text-on-surface">No Transcripts Yet</h3>
               <p className="text-[13px] text-on-surface-variant mt-1">
-                Drop transcript markdown files into <code className="font-mono text-xs text-primary">/content/days/{day.slug}/transcripts/</code> to populate.
+                Drop transcript files (<code className="font-mono text-xs text-primary">transcript-1.docx</code>..4) into <code className="font-mono text-xs text-primary">/content/days/{day.slug}/</code> to populate.
               </p>
             </div>
           )}
@@ -250,7 +259,7 @@ export default function CourseDayPage() {
       {/* ─── Tab Content 2: Summary ─────────────────────── */}
       {activeTab === 'summary' && (
         <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/10">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-outline-variant/10">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-outline-variant/10 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-primary text-[22px]">
                 summarize
@@ -260,29 +269,45 @@ export default function CourseDayPage() {
               </h2>
             </div>
 
-            <button
-              onClick={() => markDaySummary(day.slug)}
-              className={`inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-colors ${
-                dayProgress.summaryRead
-                  ? 'bg-tertiary/10 text-tertiary hover:bg-tertiary/20'
-                  : 'bg-surface-container text-outline hover:text-on-surface'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">
-                {dayProgress.summaryRead ? 'check_circle' : 'radio_button_unchecked'}
-              </span>
-              <span>{dayProgress.summaryRead ? 'Summary Completed' : 'Mark as Read'}</span>
-            </button>
+            {day.summary ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                {day.summaryDocxUrl && (
+                  <a
+                    href={day.summaryDocxUrl}
+                    download={`Day-${day.dayNumber}-Summary.docx`}
+                    className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold bg-primary text-on-primary hover:bg-secondary transition-colors shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">download</span>
+                    <span>Download Summary</span>
+                  </a>
+                )}
+
+                <button
+                  onClick={() => markDaySummary(day.slug)}
+                  className={`inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-colors ${
+                    dayProgress.summaryRead
+                      ? 'bg-tertiary/10 text-tertiary hover:bg-tertiary/20'
+                      : 'bg-surface-container text-outline hover:text-on-surface'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">
+                    {dayProgress.summaryRead ? 'check_circle' : 'radio_button_unchecked'}
+                  </span>
+                  <span>{dayProgress.summaryRead ? 'Summary Completed' : 'Mark as Read'}</span>
+                </button>
+              </div>
+            ) : null}
           </div>
+
           {day.summary ? (
-            <MarkdownView content={day.summary} />
+            <ContentRenderer content={day.summary} format={day.summaryFormat} />
           ) : (
             <div className="p-8 text-center border-2 border-dashed border-outline-variant/20 rounded-xl">
               <span className="material-symbols-outlined text-outline text-[32px] mb-2">
                 edit_note
               </span>
-              <p className="text-[13px] text-on-surface-variant">
-                Summary not yet provided. Add <code className="font-mono text-xs text-primary">summary.md</code> in this day&apos;s folder.
+              <p className="text-[13px] text-on-surface-variant font-medium">
+                No summary uploaded for this day yet.
               </p>
             </div>
           )}

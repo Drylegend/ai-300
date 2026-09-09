@@ -108,3 +108,70 @@ body {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   vertical-align: middle;
 }
+
+/* ── HTML Content Typography (mammoth-converted docx) ─── */
+.html-content h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  padding-top: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-outline-variant) 15%, transparent);
+}
+.html-content h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+  padding-top: 0.75rem;
+}
+.html-content h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  padding-top: 0.5rem;
+}
+.html-content p {
+  color: var(--color-on-surface-variant);
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.html-content strong {
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+.html-content ul,
+.html-content ol {
+  padding-left: 1.25rem;
+  color: var(--color-on-surface-variant);
+}
+.html-content li {
+  line-height: 1.5;
+  margin-top: 0.25rem;
+}
+.html-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+.html-content th,
+.html-content td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-outline-variant);
+  text-align: left;
+}
+.html-content th {
+  background: var(--color-surface-container);
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+.html-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
