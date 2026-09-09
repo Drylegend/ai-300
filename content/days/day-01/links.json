@@ -1,0 +1,22 @@
+[
+  {
+    "label": "AI-300 Microsoft Documentation",
+    "url": "https://learn.microsoft.com/en-us/training/paths/build-first-machine-operations-workflow/",
+    "description": ""
+  },
+  {
+    "label": "Study guide for Exam AI-300: Operationalizing Machine Learning and Generative AI Solutions",
+    "url": "https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/ai-300",
+    "description": "This study guide should help you understand what to expect on the exam and includes a summary of the topics the exam might cover and links to additional resources. The information and materials in this document should help you focus your studies as you prepare for the exam."
+  },
+  {
+    "label": "MLflow: AI Engineering Platform for LLMs, Agents, & Models",
+    "url": "https://mlflow.org/docs/latest/ml/",
+    "description": "MLflow is the largest open source AI engineering platform for agents, LLMs, and ML models. MLflow enables teams of all sizes to debug, evaluate, monitor, and optimize production-quality AI applications while controlling costs and managing access to models and data. With over 30 million monthly downloads, thousands of organizations rely on MLflow each day to ship AI to production with confidence."
+  },
+  {
+    "label": "MLflow 3 for GenAI",
+    "url": "https://docs.databricks.com/aws/en/mlflow3/genai/",
+    "description": ""
+  }
+]
