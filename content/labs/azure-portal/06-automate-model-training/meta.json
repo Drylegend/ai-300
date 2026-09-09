@@ -1,0 +1,8 @@
+{
+  "platform": "azure-portal",
+  "id": "06-automate-model-training",
+  "number": 6,
+  "title": "Automate model training with GitHub Actions",
+  "sourceUrl": "https://microsoftlearning.github.io/mslearn-mlops/docs/06-automate-model-training.html",
+  "status": "not-started"
+}
