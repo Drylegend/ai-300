@@ -1,0 +1,8 @@
+{
+  "platform": "azure-portal",
+  "id": "07-deploy-monitor",
+  "number": 7,
+  "title": "Deploy models to managed online endpoints",
+  "sourceUrl": "https://microsoftlearning.github.io/mslearn-mlops/docs/07-deploy-monitor.html",
+  "status": "not-started"
+}
