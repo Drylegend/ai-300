@@ -67,10 +67,10 @@ class Agent2Placement:
         slot_type: 'notes', 'doodle'
         """
         lab_dir = LABS_DIR / platform / lab_id
+        ext = staged_file.suffix.lower()
         if slot_type == "notes":
-            target_file = lab_dir / "notes.md"
+            target_file = lab_dir / f"notes{ext}"
         elif slot_type == "doodle":
-            ext = staged_file.suffix.lower()
             target_file = lab_dir / f"doodle{ext}"
         else:
             target_file = lab_dir / staged_file.name

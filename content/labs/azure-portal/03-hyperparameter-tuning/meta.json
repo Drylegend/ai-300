@@ -1,0 +1,8 @@
+{
+  "platform": "azure-portal",
+  "id": "03-hyperparameter-tuning",
+  "number": 3,
+  "title": "Tune hyperparameters with Azure ML",
+  "sourceUrl": "https://microsoftlearning.github.io/mslearn-mlops/docs/03-hyperparameter-tuning.html",
+  "status": "not-started"
+}

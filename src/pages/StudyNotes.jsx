@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import useLabState from '../hooks/useLabState';
 import StatusBadge from '../components/StatusBadge';
 import MarkdownView from '../components/MarkdownView';
+import HtmlView from '../components/HtmlView';
 import { COURSE_CONFIG } from '../config';
 
 const STATUS_CYCLE = ['not-started', 'in-progress', 'done'];
@@ -233,17 +234,34 @@ export default function StudyNotes() {
           {/* Ingested Notes from content/labs/ (read-only) */}
           {lab.ingestedNotes && (
             <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm flex flex-col gap-4 border border-outline-variant/10">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">article</span>
-                <h3 className="text-base font-semibold text-on-surface">
-                  Ingested Lab Notes
-                </h3>
-                <span className="px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary text-[10px] font-semibold">
-                  From Content
-                </span>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">article</span>
+                  <h3 className="text-base font-semibold text-on-surface">
+                    Ingested Lab Notes
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary text-[10px] font-semibold">
+                    From Content
+                  </span>
+                </div>
+
+                {lab.notesDocxUrl && (
+                  <a
+                    href={lab.notesDocxUrl}
+                    download={`Lab-${paddedNum}-Notes.docx`}
+                    className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg text-xs font-semibold bg-primary text-on-primary hover:bg-secondary transition-colors shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">download</span>
+                    <span>Download Notes</span>
+                  </a>
+                )}
               </div>
               <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/10">
-                <MarkdownView content={lab.ingestedNotes} />
+                {lab.ingestedNotesFormat === 'html' ? (
+                  <HtmlView content={lab.ingestedNotes} />
+                ) : (
+                  <MarkdownView content={lab.ingestedNotes} />
+                )}
               </div>
             </div>
           )}

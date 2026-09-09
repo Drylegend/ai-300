@@ -255,6 +255,36 @@ class TestEndToEndOrchestration(unittest.TestCase):
         finally:
             agent1.cleanup_staging()
 
+    def test_full_pipeline_lab_ingestion_docx(self):
+        agent1 = Agent1NormalizeConvert(run_id="e2e_lab_test")
+        agent2 = Agent2Placement()
+        agent4 = Agent4Validation()
+        lab_dir = LABS_DIR / "azure-portal" / "99-test-lab"
+
+        try:
+            raw_notes = self.raw_dir / "raw_lab_notes.docx"
+            doc = Document()
+            doc.add_heading("Lab 99: Hyperparameter Optimization", level=1)
+            doc.add_paragraph("Testing lab notes in native docx format.")
+            doc.save(str(raw_notes))
+
+            staged_notes = agent1.process_file(raw_notes, "notes.docx")
+            self.assertEqual(staged_notes.suffix, ".docx")
+
+            placed_notes = agent2.place_lab_file(staged_notes, "azure-portal", "99-test-lab", "notes")
+            placed_meta = agent2.ensure_lab_metadata("azure-portal", 99, "99-test-lab", "Test Lab")
+
+            expected_files = [placed_notes, placed_meta]
+            validation = agent4.validate_plan(expected_files, platform="azure-portal", lab_id="99-test-lab")
+            self.assertTrue(validation.all_passed)
+
+            self.assertTrue((lab_dir / "notes.docx").exists())
+            self.assertTrue((lab_dir / "meta.json").exists())
+        finally:
+            agent1.cleanup_staging()
+            if lab_dir.exists():
+                shutil.rmtree(lab_dir, ignore_errors=True)
+
 
 if __name__ == "__main__":
     unittest.main()

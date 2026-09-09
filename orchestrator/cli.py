@@ -256,7 +256,9 @@ def _handle_lab_ingestion(agent1, agent2, agent3, agent4, agent5):
     notes_file = pick_file(notes_title, doc_filetypes)
     if notes_file:
         try:
-            staged_notes = agent1.process_file(notes_file, "notes.md")
+            src_ext = notes_file.suffix.lower()
+            out_ext = ".docx" if src_ext in {".docx", ".doc"} else ".md"
+            staged_notes = agent1.process_file(notes_file, f"notes{out_ext}")
             placed_notes = agent2.place_lab_file(staged_notes, platform_slug, lab_id, "notes")
             if placed_notes:
                 expected_files.append(placed_notes)

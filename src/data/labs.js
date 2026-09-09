@@ -1,13 +1,11 @@
 /**
  * Lab data — single schema shared across Azure Portal Labs, Foundry Labs, and Doodles.
  *
- * Every text field that would have had Stitch-generated filler ships EMPTY.
- * Status defaults to "not-started" for every lab.
- *
- * Dynamic enrichment: Doodle images and notes files are automatically
+ * Dynamic enrichment: Doodle images and notes files (.docx and .md) are automatically
  * discovered from /content/labs/ at build/dev time via Vite import.meta.glob,
- * matching the same pattern used by days.js. Agent 2 only needs to write files
- * to content/labs/<platform>/<lab-id>/ — no manual JS edits needed.
+ * matching the same pattern used by days.js.
+ *
+ * .docx files are auto-converted to HTML with inline images via vite-plugin-docx.
  */
 
 const INITIAL_LABS = [
@@ -82,23 +80,28 @@ const INITIAL_LABS = [
     doodleImage: null,
     status: "not-started",
   },
-
-  // ─── Foundry Labs ─────────────────────────────────────────
-  // Empty — Foundry labs will be added here when ready.
-  // They use the identical schema and will automatically render
-  // via LabCard / DoodleCard with zero UI changes.
 ];
 
 // ─── Dynamic Enrichment ────────────────────────────────────
 // Scan /content/labs/ for doodle images and notes files at build time.
-// This wires uploaded lab content into the UI without manual edits.
 
 const doodleModules = import.meta.glob(
   '/content/labs/*/*/doodle.{png,jpg,jpeg,svg,webp}',
   { eager: true, query: '?url', import: 'default' }
 );
 
-const notesModules = import.meta.glob(
+// Docx notes (converted to HTML by vite-plugin-docx)
+const notesDocxModules = import.meta.glob(
+  '/content/labs/*/*/notes.docx',
+  { eager: true, import: 'default' }
+);
+const notesDocxUrls = import.meta.glob(
+  '/content/labs/*/*/notes.docx',
+  { eager: true, query: '?url', import: 'default' }
+);
+
+// Fallback legacy markdown notes
+const notesMdModules = import.meta.glob(
   '/content/labs/*/*/notes.md',
   { eager: true, query: '?raw', import: 'default' }
 );
@@ -108,23 +111,40 @@ const notesModules = import.meta.glob(
  * Matches by platform and lab ID derived from the file path.
  */
 function enrichLabs() {
-  // Build lookup maps keyed by "<platform>/<lab-id>"
   const doodleMap = {};
   for (const path in doodleModules) {
-    // path: /content/labs/azure-portal/01-experiment-evaluate-models/doodle.png
     const match = path.match(/\/content\/labs\/([^/]+)\/([^/]+)\/doodle\./);
     if (match) {
       const key = `${match[1]}/${match[2]}`;
-      doodleMap[key] = doodleModules[path]; // URL string from ?url import
+      doodleMap[key] = doodleModules[path];
     }
   }
 
   const notesMap = {};
-  for (const path in notesModules) {
+  const notesFormatMap = {};
+  const notesDocxUrlMap = {};
+
+  // 1. Docx notes (priority)
+  for (const path in notesDocxModules) {
+    const match = path.match(/\/content\/labs\/([^/]+)\/([^/]+)\/notes\.docx$/);
+    if (match) {
+      const key = `${match[1]}/${match[2]}`;
+      notesMap[key] = notesDocxModules[path];
+      notesFormatMap[key] = 'html';
+      notesDocxUrlMap[key] = notesDocxUrls[path] || null;
+    }
+  }
+
+  // 2. MD notes (fallback if docx not present)
+  for (const path in notesMdModules) {
     const match = path.match(/\/content\/labs\/([^/]+)\/([^/]+)\/notes\.md$/);
     if (match) {
       const key = `${match[1]}/${match[2]}`;
-      notesMap[key] = notesModules[path]; // raw string content
+      if (!notesMap[key]) {
+        notesMap[key] = notesMdModules[path];
+        notesFormatMap[key] = 'md';
+        notesDocxUrlMap[key] = null;
+      }
     }
   }
 
@@ -134,6 +154,8 @@ function enrichLabs() {
       ...lab,
       doodleImage: doodleMap[key] || lab.doodleImage,
       ingestedNotes: notesMap[key] || null,
+      ingestedNotesFormat: notesFormatMap[key] || 'md',
+      notesDocxUrl: notesDocxUrlMap[key] || null,
     };
   });
 }
