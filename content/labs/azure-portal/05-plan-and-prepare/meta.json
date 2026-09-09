@@ -1,0 +1,8 @@
+{
+  "platform": "azure-portal",
+  "id": "05-plan-and-prepare",
+  "number": 5,
+  "title": "Plan an enterprise MLOps architecture",
+  "sourceUrl": "https://microsoftlearning.github.io/mslearn-mlops/docs/05-plan-and-prepare.html",
+  "status": "not-started"
+}
