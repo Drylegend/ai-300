@@ -13,13 +13,12 @@
 const metaModules = import.meta.glob('/content/days/*/meta.json', { eager: true });
 const linksModules = import.meta.glob('/content/days/*/links.json', { eager: true });
 
-// 2. Docx formats (mammoth-converted to HTML by vite-plugin-docx)
-const summaryDocxModules = import.meta.glob('/content/days/*/summary.docx', { import: 'default', eager: true });
+// 2. Docx formats (original .docx asset URLs for client-side docx-preview rendering)
 const summaryDocxUrls = import.meta.glob('/content/days/*/summary.docx', { query: '?url', import: 'default', eager: true });
 
 // Transcripts directly in day folder or in transcripts/ subfolder
-const transcriptDocxDirectModules = import.meta.glob('/content/days/*/transcript-*.docx', { import: 'default', eager: true });
-const transcriptDocxSubModules = import.meta.glob('/content/days/*/transcripts/transcript-*.docx', { import: 'default', eager: true });
+const transcriptDocxDirectUrls = import.meta.glob('/content/days/*/transcript-*.docx', { query: '?url', import: 'default', eager: true });
+const transcriptDocxSubUrls = import.meta.glob('/content/days/*/transcripts/transcript-*.docx', { query: '?url', import: 'default', eager: true });
 
 // 3. Fallback formats (legacy .html and .md)
 const summaryHtmlModules = import.meta.glob('/content/days/*/summary.html', { query: '?raw', import: 'default', eager: true });
@@ -38,9 +37,9 @@ export function getAllDays() {
   // Discover all day folders across all globs
   const allModuleMaps = [
     metaModules,
-    summaryDocxModules,
-    transcriptDocxDirectModules,
-    transcriptDocxSubModules,
+    summaryDocxUrls,
+    transcriptDocxDirectUrls,
+    transcriptDocxSubUrls,
     summaryHtmlModules,
     summaryMdModules,
     transcriptHtmlModules,
@@ -71,13 +70,13 @@ export function getAllDays() {
     const summaryMdPath = `/content/days/${folderSlug}/summary.md`;
 
     let summaryContent = '';
-    let summaryFormat = 'html';
+    let summaryFormat = 'docx';
     let summaryDocxUrl = null;
 
-    if (summaryDocxModules[summaryDocxPath] !== undefined) {
-      summaryContent = summaryDocxModules[summaryDocxPath] || '';
-      summaryFormat = 'html';
-      summaryDocxUrl = summaryDocxUrls[summaryDocxPath] || null;
+    if (summaryDocxUrls[summaryDocxPath]) {
+      summaryContent = summaryDocxUrls[summaryDocxPath];
+      summaryFormat = 'docx';
+      summaryDocxUrl = summaryDocxUrls[summaryDocxPath];
     } else if (summaryHtmlModules[summaryHtmlPath]) {
       summaryContent = summaryHtmlModules[summaryHtmlPath];
       summaryFormat = 'html';
@@ -103,37 +102,39 @@ export function getAllDays() {
 
     // 1. Docx transcripts (priority)
     // Check transcripts/ subfolder
-    for (const tPath in transcriptDocxSubModules) {
+    for (const tPath in transcriptDocxSubUrls) {
       if (extractDaySlug(tPath) === folderSlug) {
         const { filename, order } = parseTranscriptInfo(tPath);
-        const rawContent = transcriptDocxSubModules[tPath] || '';
-        if (rawContent.trim()) {
+        const docxUrl = transcriptDocxSubUrls[tPath];
+        if (docxUrl) {
           transcriptsMap.set(order, {
             id: `transcript-${order}`,
             filename,
             order,
             title: `Transcript ${order}`,
-            content: rawContent,
-            format: 'html',
+            content: docxUrl,
+            fileUrl: docxUrl,
+            format: 'docx',
           });
         }
       }
     }
 
     // Check direct day folder transcript-*.docx (if not already found in subfolder)
-    for (const tPath in transcriptDocxDirectModules) {
+    for (const tPath in transcriptDocxDirectUrls) {
       if (extractDaySlug(tPath) === folderSlug) {
         const { filename, order } = parseTranscriptInfo(tPath);
         if (!transcriptsMap.has(order)) {
-          const rawContent = transcriptDocxDirectModules[tPath] || '';
-          if (rawContent.trim()) {
+          const docxUrl = transcriptDocxDirectUrls[tPath];
+          if (docxUrl) {
             transcriptsMap.set(order, {
               id: `transcript-${order}`,
               filename,
               order,
               title: `Transcript ${order}`,
-              content: rawContent,
-              format: 'html',
+              content: docxUrl,
+              fileUrl: docxUrl,
+              format: 'docx',
             });
           }
         }
@@ -153,6 +154,7 @@ export function getAllDays() {
               order,
               title: `Transcript ${order}`,
               content: rawContent,
+              fileUrl: null,
               format: 'html',
             });
           }
@@ -173,6 +175,7 @@ export function getAllDays() {
               order,
               title: `Transcript ${order}`,
               content: rawContent,
+              fileUrl: null,
               format: 'md',
             });
           }

@@ -90,11 +90,7 @@ const doodleModules = import.meta.glob(
   { eager: true, query: '?url', import: 'default' }
 );
 
-// Docx notes (converted to HTML by vite-plugin-docx)
-const notesDocxModules = import.meta.glob(
-  '/content/labs/*/*/notes.docx',
-  { eager: true, import: 'default' }
-);
+// Docx notes (asset URLs for client-side docx-preview rendering)
 const notesDocxUrls = import.meta.glob(
   '/content/labs/*/*/notes.docx',
   { eager: true, query: '?url', import: 'default' }
@@ -125,12 +121,12 @@ function enrichLabs() {
   const notesDocxUrlMap = {};
 
   // 1. Docx notes (priority)
-  for (const path in notesDocxModules) {
+  for (const path in notesDocxUrls) {
     const match = path.match(/\/content\/labs\/([^/]+)\/([^/]+)\/notes\.docx$/);
     if (match) {
       const key = `${match[1]}/${match[2]}`;
-      notesMap[key] = notesDocxModules[path];
-      notesFormatMap[key] = 'html';
+      notesMap[key] = notesDocxUrls[path];
+      notesFormatMap[key] = 'docx';
       notesDocxUrlMap[key] = notesDocxUrls[path] || null;
     }
   }

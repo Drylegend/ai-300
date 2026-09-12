@@ -4,6 +4,7 @@ import useLabState from '../hooks/useLabState';
 import StatusBadge from '../components/StatusBadge';
 import MarkdownView from '../components/MarkdownView';
 import HtmlView from '../components/HtmlView';
+import DocxView from '../components/DocxView';
 import { COURSE_CONFIG } from '../config';
 
 const STATUS_CYCLE = ['not-started', 'in-progress', 'done'];
@@ -256,8 +257,13 @@ export default function StudyNotes() {
                   </a>
                 )}
               </div>
-              <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant/10">
-                {lab.ingestedNotesFormat === 'html' ? (
+              <div className="p-2 sm:p-4 rounded-xl bg-surface-container-low border border-outline-variant/10">
+                {lab.ingestedNotesFormat === 'docx' ? (
+                  <DocxView
+                    fileUrl={lab.ingestedNotes}
+                    filename={`Lab-${paddedNum}-Notes.docx`}
+                  />
+                ) : lab.ingestedNotesFormat === 'html' ? (
                   <HtmlView content={lab.ingestedNotes} />
                 ) : (
                   <MarkdownView content={lab.ingestedNotes} />

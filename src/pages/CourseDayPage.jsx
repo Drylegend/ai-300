@@ -5,9 +5,13 @@ import { COURSE_CONFIG } from '../config';
 import { useProgress } from '../context/ProgressContext';
 import MarkdownView from '../components/MarkdownView';
 import HtmlView from '../components/HtmlView';
+import DocxView from '../components/DocxView';
 
-/** Renders content in either HTML or Markdown format based on the format field. */
-function ContentRenderer({ content, format }) {
+/** Renders content in DOCX, HTML, or Markdown format based on the format field. */
+function ContentRenderer({ content, format, filename }) {
+  if (format === 'docx') {
+    return <DocxView fileUrl={content} filename={filename} />;
+  }
   if (format === 'html') {
     return <HtmlView content={content} />;
   }
@@ -200,6 +204,18 @@ export default function CourseDayPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {transcript.fileUrl && (
+                        <a
+                          href={transcript.fileUrl}
+                          download={transcript.filename || `transcript-${transcript.order}.docx`}
+                          className="inline-flex items-center gap-1 py-1.5 px-2.5 rounded-lg text-xs font-semibold bg-surface-container text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                          title="Download original document"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">download</span>
+                          <span className="hidden sm:inline">Download</span>
+                        </a>
+                      )}
+
                       <button
                         onClick={() => markDayTranscript(day.slug, transcript.id)}
                         className={`inline-flex items-center gap-1 py-1.5 px-2.5 rounded-lg text-xs font-semibold transition-colors ${
@@ -234,8 +250,12 @@ export default function CourseDayPage() {
                   {/* Expanded Reader View */}
                   {isExpanded && (
                     <div className="pt-2 border-t border-outline-variant/10">
-                      <div className="p-4 md:p-5 rounded-xl bg-surface-container-low border border-outline-variant/10">
-                        <ContentRenderer content={transcript.content} format={transcript.format} />
+                      <div className="p-2 sm:p-4 rounded-xl bg-surface-container-low border border-outline-variant/10">
+                        <ContentRenderer
+                          content={transcript.content}
+                          format={transcript.format}
+                          filename={transcript.filename || `transcript-${transcript.order}.docx`}
+                        />
                       </div>
                     </div>
                   )}
@@ -300,7 +320,11 @@ export default function CourseDayPage() {
           </div>
 
           {day.summary ? (
-            <ContentRenderer content={day.summary} format={day.summaryFormat} />
+            <ContentRenderer
+              content={day.summary}
+              format={day.summaryFormat}
+              filename={`Day-${paddedNum}-Summary.docx`}
+            />
           ) : (
             <div className="p-8 text-center border-2 border-dashed border-outline-variant/20 rounded-xl">
               <span className="material-symbols-outlined text-outline text-[32px] mb-2">
