@@ -1,0 +1,8 @@
+{
+  "platform": "foundry",
+  "id": "05-monitor-and-trace-your-generative-ai-agent",
+  "number": 5,
+  "title": "Monitor and trace your generative AI agent",
+  "sourceUrl": "https://microsoftlearning.github.io/mslearn-genaiops/docs/05-monitoring-tracing.html",
+  "status": "not-started"
+}
