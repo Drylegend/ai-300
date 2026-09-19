@@ -80,10 +80,66 @@ const INITIAL_LABS = [
     doodleImage: null,
     status: "not-started",
   },
+  // ─── AI Foundry Labs (1–5) ────────────────────────────────
+  {
+    platform: "foundry",
+    id: "01-plan-and-prepare-a-genaiops-solution",
+    number: 1,
+    title: "Plan and prepare a GenAIOps solution",
+    sourceUrl: "https://microsoftlearning.github.io/mslearn-genaiops/docs/01-infrastructure-setup.html",
+    summary: "",
+    doodleImage: null,
+    status: "not-started",
+  },
+  {
+    platform: "foundry",
+    id: "02-develop-prompt-and-agent-versions",
+    number: 2,
+    title: "Develop prompt and agent versions",
+    sourceUrl: "https://microsoftlearning.github.io/mslearn-genaiops/docs/02-prompt-management.html",
+    summary: "",
+    doodleImage: null,
+    status: "not-started",
+  },
+  {
+    platform: "foundry",
+    id: "03-design-and-optimize-prompts",
+    number: 3,
+    title: "Design and optimize prompts",
+    sourceUrl: "https://microsoftlearning.github.io/mslearn-genaiops/docs/03-design-optimize-prompts.html",
+    summary: "",
+    doodleImage: null,
+    status: "not-started",
+  },
+  {
+    platform: "foundry",
+    id: "04-automated-evaluation-with-cloud-evaluators",
+    number: 4,
+    title: "Automated evaluation with cloud evaluators",
+    sourceUrl: "https://microsoftlearning.github.io/mslearn-genaiops/docs/04-automated-evaluation.html",
+    summary: "",
+    doodleImage: null,
+    status: "not-started",
+  },
+  {
+    platform: "foundry",
+    id: "05-monitor-and-trace-your-generative-ai-agent",
+    number: 5,
+    title: "Monitor and trace your generative AI agent",
+    sourceUrl: "https://microsoftlearning.github.io/mslearn-genaiops/docs/05-monitoring-tracing.html",
+    summary: "",
+    doodleImage: null,
+    status: "not-started",
+  },
 ];
 
 // ─── Dynamic Enrichment ────────────────────────────────────
-// Scan /content/labs/ for doodle images and notes files at build time.
+// Scan /content/labs/ for metadata, doodle images, and notes files at build time.
+
+const metaModules = import.meta.glob(
+  '/content/labs/*/*/meta.json',
+  { eager: true }
+);
 
 const doodleModules = import.meta.glob(
   '/content/labs/*/*/doodle.{png,jpg,jpeg,svg,webp}',
@@ -103,8 +159,8 @@ const notesMdModules = import.meta.glob(
 );
 
 /**
- * Enriches INITIAL_LABS with dynamically discovered assets from /content/labs/.
- * Matches by platform and lab ID derived from the file path.
+ * Enriches INITIAL_LABS with dynamically discovered assets and meta.json files
+ * from /content/labs/. Matches by platform and lab ID derived from the file path.
  */
 function enrichLabs() {
   const doodleMap = {};
@@ -144,16 +200,59 @@ function enrichLabs() {
     }
   }
 
-  return INITIAL_LABS.map(lab => {
+  // Combine INITIAL_LABS with dynamically discovered labs from meta.json
+  const labsMap = new Map();
+
+  for (const lab of INITIAL_LABS) {
     const key = `${lab.platform}/${lab.id}`;
-    return {
-      ...lab,
-      doodleImage: doodleMap[key] || lab.doodleImage,
-      ingestedNotes: notesMap[key] || null,
-      ingestedNotesFormat: notesFormatMap[key] || 'md',
-      notesDocxUrl: notesDocxUrlMap[key] || null,
-    };
-  });
+    labsMap.set(key, { ...lab });
+  }
+
+  for (const path in metaModules) {
+    const match = path.match(/\/content\/labs\/([^/]+)\/([^/]+)\/meta\.json$/);
+    if (match) {
+      const platform = match[1];
+      const id = match[2];
+      const key = `${platform}/${id}`;
+      const metaData = metaModules[path]?.default || metaModules[path] || {};
+      const existing = labsMap.get(key) || {
+        platform,
+        id,
+        summary: '',
+        doodleImage: null,
+        status: 'not-started',
+      };
+
+      labsMap.set(key, {
+        ...existing,
+        ...metaData,
+        platform: metaData.platform || platform,
+        id: metaData.id || id,
+        number: typeof metaData.number === 'number' ? metaData.number : existing.number,
+        title: metaData.title || existing.title,
+        sourceUrl: metaData.sourceUrl || existing.sourceUrl,
+      });
+    }
+  }
+
+  return Array.from(labsMap.values())
+    .map(lab => {
+      const key = `${lab.platform}/${lab.id}`;
+      return {
+        ...lab,
+        doodleImage: doodleMap[key] || lab.doodleImage || null,
+        ingestedNotes: notesMap[key] || null,
+        ingestedNotesFormat: notesFormatMap[key] || 'md',
+        notesDocxUrl: notesDocxUrlMap[key] || null,
+      };
+    })
+    .sort((a, b) => {
+      if (a.platform !== b.platform) {
+        return a.platform === 'azure-portal' ? -1 : 1;
+      }
+      return (a.number || 0) - (b.number || 0);
+    });
 }
 
 export default enrichLabs();
+

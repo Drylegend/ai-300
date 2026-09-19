@@ -30,6 +30,12 @@ export default function FoundryLabs() {
           <span className="material-symbols-outlined text-[14px]">chevron_right</span>
           <span className="text-primary font-semibold">Foundry</span>
         </div>
+        <h1 className="text-2xl font-bold text-on-surface tracking-tight">
+          AI Foundry Lab Tracks
+        </h1>
+        <p className="text-[13px] text-on-surface-variant">
+          Enterprise GenAIOps and Prompt Engineering practical exercises
+        </p>
       </div>
 
       {/* Platform Switcher */}
